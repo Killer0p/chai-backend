@@ -1,0 +1,15 @@
+{
+  "name": "ribesh-backend",
+  "version": "1.0.0",
+  "description": "a backend learning by ribesh from chai aur code",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "javascript",
+    "backend"
+  ],
+  "author": "\"Ribesh Raut\"",
+  "license": "ISC"
+}
