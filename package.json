@@ -4,7 +4,7 @@
   "description": "a backend learning by ribesh from chai aur code",
   "type": "module",
   "main": "index.js",
-    "scripts": {
+  "scripts": {
     "dev": "nodemon src/index.js"
   },
   "keywords": [
@@ -14,6 +14,7 @@
   "author": "\"Ribesh Raut\"",
   "license": "ISC",
   "devDependencies": {
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.9",
+    "prettier": "^3.5.3"
   }
 }
