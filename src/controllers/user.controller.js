@@ -1,77 +1,77 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import ApiError from "../utils/apiError.js";
 import { User } from "../models/user.model.js";
-import uploadOnCloudinary  from "../utils/cloudinary.js";
+import uploadOnCloudinary from "../utils/cloudinary.js";
 import apiResponse from "../utils/apiResponse.js";
-import { json } from "express";
 
+const registerUser = asyncHandler(async (req, res) => {
+  const { fullName, email, userName, password } = req.body;
+  // console.log("email:", email);
+  // Validate fields
+  if ([fullName, email, userName, password].some(field => !field?.trim())) {
+    throw new ApiError(400, "All fields are required");
+  }
 
-const registerUser = asyncHandler(async (req, res) => {  
-   // get user details from frontend
-   // validation - not empty
-   // check if user already exists; username or email
-   // check for images , check for avatar
-   // upload them to cloudinary
-   // create user object - create entry in db
-   // remove password and refresh token field from response
-   // check for user creation 
-   // return response
+  // Check for existing user
+  const existedUser = await User.findOne({
+    $or: [{ username: userName.toLowerCase() }, { email }]
+  });
 
-   const {fullName, email, userName, password } = req.body;
-if (
-  ["fullName", "email", "userName", "password"].some((field) => field?.trim() === "")
-){
-  throw new ApiError(400, "All fields are required");
+  if (existedUser) {
+    throw new ApiError(409, "User already exists");
+  }
+//console.log("req.files", req.files);
+
+  // Get file paths
+  const avatarLocalPath = req.files?.avatar?.[0]?.path;
+  // const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
+
+let coverImageLocalPath;
+if (req.files && Array.isArray(req.files.
+  coverImage) && req.files.coverImage.length > 0) {
+    coverImageLocalPath = req.files.coverImage[0].path;
+     
 }
-const existedUser = User.findOne({
-  $or: [{ username: userName }, { email: email }]
+
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar file is required");
+  }
+
+  // Upload images to Cloudinary
+  const avatarUpload = await uploadOnCloudinary(avatarLocalPath);
+  const coverImageUpload = coverImageLocalPath
+    ? await uploadOnCloudinary(coverImageLocalPath)
+    : null;
+
+  const avatarUrl = avatarUpload?.secure_url;
+  const coverImageUrl = coverImageUpload?.secure_url || "";
+
+  if (!avatarUrl) {
+    throw new ApiError(400, "Avatar upload failed");
+  }
+
+  // Create user
+  const newUser = await User.create({
+    fullname: fullName,
+    username: userName.toLowerCase(),
+    email,
+    password,
+    avatar: avatarUrl,
+    coverImage: coverImageUrl
+  });
+
+  // Return created user (excluding sensitive data)
+  const createdUser = await User.findById(newUser._id).select(
+    "-password -refreshToken"
+  );
+
+  if (!createdUser) {
+    throw new ApiError(500, "Something went wrong registering user");
+  }
+
+  return res.status(201).json(
+    new apiResponse(201, createdUser, "User created successfully")
+  );
 });
-if (existedUser) {
-  throw new ApiError(409, "User already exists");
-}
 
- const avatarLocalPath =req.files?.avatar[0]?.path;
- const coverImageLocalPath = req.files?.avatar[0]?.path;
-
- if (!avatarLocalPath) {
-  throw new ApiError(400, "Avatar file is required")
-
-} 
-
-const avatar = await uploadOnCloudinary(avatarLocalPath)
-
-const coverImage = await uploadOnCloudinary(coverImageLocalPath)
-
-if (!avatar) {
-  throw new ApiError(400, "Avatar upload failed")
-}
-
-const user = await user.create({
-  fullName,
-  avatar: avatar.url,
-  coverImage: coverImage?.URL || "",
-  email,
-  userName: userName.toLowerCase(),
-  password,
-})
-
-const createdUser = await User.findById(user._id).select(
-  "-password -refreshToken"
-)
-
-if (!createdUser) {
-  throw new ApiError(500, "something went wrong registering user ")
-}
-
-return res.status(201),json(
-  new apiResponse(200, createdUser, "User created successfully")
-  
-)
-
-
-} )
- 
-export { registerUser 
-
-};
-
+export { registerUser };
